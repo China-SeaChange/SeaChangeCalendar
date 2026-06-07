@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeaChange Calendar</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235b8def' /%3E%3Ctext x='50' y='70' font-size='52' text-anchor='middle' fill='white' font-weight='bold' font-family='system-ui, sans-serif'%3E26%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="float-expand-btn" id="floatExpandBtn" title="展开顶部">▼</button>
+    <div class="top-section" id="topSection">
+        <div class="header">
+            <button class="nav-btn" id="prevMonth" title="上个月">◀</button>
+            <div class="year-month">
+                <span class="year-number" id="yearNumber">2026</span><span>年</span>
+                <span class="month-number" id="monthNumber">1</span><span>月</span>
+            </div>
+            <button class="nav-btn" id="nextMonth" title="下个月">▶</button>
+        </div>
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索...">
+                <button class="search-btn" id="searchBtn" title="搜索">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </button>
+            </div>
+            <button class="btn" id="btnShowNotes">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                日程
+            </button>
+            <button class="btn" id="btnExport">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                导出
+            </button>
+            <button class="btn" id="btnImport">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                导入
+            </button>
+            <button class="btn btn-danger" id="btnClearAll">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                清空
+            </button>
+            <button class="btn" id="btnCollapse">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                折叠
+            </button>
+            <input type="file" id="importFileInput" accept=".json" hidden>
+        </div>
+    </div>
+
+    <div class="calendar-container" id="calendarContainer">
+        <table class="calendar-table" id="calendarTable">
+            <thead>
+                <tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr>
+            </thead>
+            <tbody id="calendarTbody"></tbody>
+        </table>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-date-info"><span id="modalDateTitle"></span></div>
+                <button class="modal-close" id="modalClose">✕</button>
+            </div>
+            <div class="emoji-section">
+                <div class="emoji-header" id="emojiToggleHeader">
+                    <label>🏷️ 日期表情：</label>
+                    <button class="emoji-toggle-btn" id="emojiToggleBtn" title="折叠/展开">▲</button>
+                </div>
+                <div id="emojiContent">
+                    <div id="currentEmojis" class="current-emojis-wrap"></div>
+                    <div class="emoji-picker" id="emojiPicker"></div>
+                    <div style="display:flex;gap:6px;margin-top:4px;">
+                        <input type="text" id="emojiCustomInput" placeholder="自定义" maxlength="4" style="width:80px;">
+                        <button class="btn" id="emojiAddBtn">添加</button>
+                    </div>
+                </div>
+            </div>
+            <div class="existing-notes" id="existingNotes"><div>已有内容条：</div><div id="existingNotesList"></div></div>
+            <div class="edit-panels">
+                <div class="edit-left">
+                    <label>📝 内容条文字：</label>
+                    <textarea id="modalTextarea"></textarea>
+                </div>
+                <div class="edit-right">
+                    <label>📎 备注（悬停时显示）：</label>
+                    <textarea id="modalRemark" placeholder="可添加备注，鼠标悬停在日程条上时会显示..."></textarea>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+                <label>🎨颜色：</label>
+                <input type="color" id="modalColor" value="#1F6ED4">
+                <div class="color-presets" id="colorPresets"></div>
+                <label style="margin-left:10px;"><input type="checkbox" id="modalMilestone"> 里程碑</label>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn-save" id="modalAddBtn">➕添加</button>
+                <button class="btn-cancel" id="modalCancelEditBtn" style="display:none;">↩取消编辑</button>
+            </div>
+            <input type="hidden" id="modalEditingNoteId" value="">
+        </div>
+    </div>
+
+    <!-- 其他弹窗 -->
+    <div class="modal-overlay" id="notesModalOverlay" style="display:none;">
+        <div class="modal" style="max-width:800px;">
+            <div class="modal-header"><span>📋 所有日程</span><button class="modal-close" id="notesModalClose">✕</button></div>
+            <div id="notesModalContent" style="max-height:65vh;overflow-y:auto;"></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="searchModalOverlay" style="display:none;">
+        <div class="modal" style="max-width:800px;">
+            <div class="modal-header"><span>🔍 搜索结果</span><button class="modal-close" id="searchModalClose">✕</button></div>
+            <ul class="search-results" id="searchResultsList"></ul>
+        </div>
+    </div>
+    <div class="modal-overlay" id="confirmOverlay" style="display:none;">
+        <div class="modal" style="max-width:380px;text-align:center;">
+            <p id="confirmMsg" style="margin-bottom:14px;"></p>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button class="btn-save" id="confirmYes" style="background:#e05550;">确认</button>
+                <button class="btn" id="confirmNo">取消</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
